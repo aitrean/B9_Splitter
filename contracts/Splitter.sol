@@ -1,5 +1,12 @@
 pragma solidity ^0.4.11;
 
+/*
+* Written by William Prado (Aitrean)
+* Prepared for B9 Labs Course, see readme
+* This contract assumes Alice initializes a contract to send ether to her
+* friends, Bob and Carol. She initializes their addresses during instantiation
+* of the contract, and then sends ether through sendFunds()
+*/
 contract Splitter {
  address bobAddress;
  address carolAddress;
@@ -22,15 +29,16 @@ contract Splitter {
  
  function sendFunds() public payable isAlice() {
      if (msg.value > 0) {
-         users[bobAddress].availableBalance += msg.value/2;
-         users[carolAddress].availableBalance += msg.value/2;
+         var valuePerUser = msg.value/2;
+         users[bobAddress].availableBalance += valuePerUser;
+         users[carolAddress].availableBalance += msg.value - valuePerUser;
      }
  }
  
  function withdraw() public validAddress() {
      uint sendAmount = users[msg.sender].availableBalance;
      users[msg.sender].availableBalance = 0;
-     newBalance(users[msg.sender].availableBalance);
+     newBalance(msg.sender, users[msg.sender].availableBalance);
      msg.sender.transfer(sendAmount);
  }
  
@@ -58,5 +66,6 @@ contract Splitter {
       _;
  }
 
- event newBalance(uint availableBalance);
+ //emit an event to indicate an update to a user balance
+ event newBalance(address userAddress, uint availableBalance);
 }

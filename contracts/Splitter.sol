@@ -1,7 +1,7 @@
 pragma solidity ^0.4.11;
 
 /*
-* Written by William Prado (Aitrean)
+* Written by Aitrean
 * Prepared for B9 Labs Course, see readme
 * This contract assumes Alice initializes a contract to send ether to her
 * friends, Bob and Carol. She initializes their addresses during instantiation

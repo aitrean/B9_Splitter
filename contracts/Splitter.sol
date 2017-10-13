@@ -8,37 +8,48 @@ pragma solidity ^0.4.11;
 * of the contract, and then sends ether through sendFunds()
 */
 contract Splitter {
- address bobAddress;
- address carolAddress;
- address aliceAddress;
- struct user {
-     string name;
-     uint availableBalance;
- }
- mapping(address => user) users;
+ address owner;
+ bool running = true;
+ mapping(address => uint) public accountBalances;
  
- //Alice initializes the contract with Bob and Carol's addresses
- function Splitter(address bob, address carol) public {
-     bobAddress = bob;
-     carolAddress = carol;
-     aliceAddress = msg.sender;
-     users[bobAddress] = user("Bob", 0);
-     users[carolAddress] = user("Carol", 0);
-     users[msg.sender] = user("Alice", 0);
+ event SendFunds(address ownerAddress, address accountA, address accountB, uint valueA, uint valueB);
+ event Withdraw(address to, uint amount);
+
+  modifier validAddress(){
+     require(accountBalances[msg.sender] != 0);
+     _;
  }
  
- function sendFunds() public payable isAlice() {
+ modifier isOwner(){
+      require(msg.sender == owner);
+      _;
+ }
+
+ modifier isRunning(){
+     require(running == true);
+     _;
+ }
+
+ function Splitter() public {
+     owner = msg.sender;
+ }
+ 
+ function sendFunds(address addressA, address addressB) public payable isOwner() isRunning() returns (bool){
      if (msg.value > 0) {
-         var valuePerUser = msg.value/2;
-         users[bobAddress].availableBalance += valuePerUser;
-         users[carolAddress].availableBalance += msg.value - valuePerUser;
+         uint valueA = msg.value/2;
+         uint valueB = msg.value - valueA;
+         accountBalances[addressA] += valueA;
+         accountBalances[addressB] += valueB;
+         SendFunds(owner, addressA, addressB, valueA, valueB);
+         return true;
      }
+     return false;
  }
  
- function withdraw() public validAddress() {
-     uint sendAmount = users[msg.sender].availableBalance;
-     users[msg.sender].availableBalance = 0;
-     newBalance(msg.sender, users[msg.sender].availableBalance);
+ function withdraw() public validAddress() isRunning() {
+     uint sendAmount = accountBalances[msg.sender];
+     accountBalances[msg.sender] = 0;
+     Withdraw(msg.sender, sendAmount);
      msg.sender.transfer(sendAmount);
  }
  
@@ -46,26 +57,13 @@ contract Splitter {
     return this.balance;
  }
  
- function getFunds(address userAddress) public constant returns (uint) {
-     return users[userAddress].availableBalance;
+ function pauseContract() public isOwner() {
+     running = false;
  }
- 
- function kill() public isAlice() {
-     selfdestruct(aliceAddress);
+
+ function resumeContract() public isOwner() {
+     running = true;
  }
  
  function() public payable {}
- 
- modifier validAddress(){
-     require(bytes(users[msg.sender].name).length != 0);
-     _;
- }
- 
- modifier isAlice(){
-      require(msg.sender == aliceAddress);
-      _;
- }
-
- //emit an event to indicate an update to a user balance
- event newBalance(address userAddress, uint availableBalance);
 }

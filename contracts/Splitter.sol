@@ -12,10 +12,10 @@ contract Splitter {
  bool running = true;
  mapping(address => uint) public accountBalances;
  
- event SendFunds(address ownerAddress, address accountA, address accountB, uint valueA, uint valueB);
- event Withdraw(address to, uint amount);
+ event LogSendFunds(address ownerAddress, address accountA, address accountB, uint valueA, uint valueB);
+ event LogWithdraw(address to, uint amount);
 
-  modifier validAddress(){
+  modifier onlyIfBalance(){
      require(accountBalances[msg.sender] != 0);
      _;
  }
@@ -40,21 +40,17 @@ contract Splitter {
          uint valueB = msg.value - valueA;
          accountBalances[addressA] += valueA;
          accountBalances[addressB] += valueB;
-         SendFunds(owner, addressA, addressB, valueA, valueB);
+         LogSendFunds(owner, addressA, addressB, valueA, valueB);
          return true;
      }
      return false;
  }
  
- function withdraw() public validAddress() isRunning() {
+ function withdraw() public onlyIfBalance() isRunning() {
      uint sendAmount = accountBalances[msg.sender];
      accountBalances[msg.sender] = 0;
-     Withdraw(msg.sender, sendAmount);
+     LogWithdraw(msg.sender, sendAmount);
      msg.sender.transfer(sendAmount);
- }
- 
- function getBalance() public constant returns (uint) {
-    return this.balance;
  }
  
  function pauseContract() public isOwner() {
@@ -65,5 +61,7 @@ contract Splitter {
      running = true;
  }
  
- function() public payable {}
+ function() public payable {
+     revert();
+ }
 }

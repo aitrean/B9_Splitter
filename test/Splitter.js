@@ -16,7 +16,7 @@ contract('Splitter', accounts => {
 	it('should let the owner send funds to two accounts', () => {
 		return contract.sendFunds(accountA, accountB, { value: 4999, from: owner }
 		).then(() => {
-			eventUtil.assertEvent(contract, { event: 'SendFunds', args: { ownerAddress: owner, accountA: accountA, accountB: accountB } })
+			eventUtil.assertEvent(contract, { event: 'LogSendFunds', args: { ownerAddress: owner, accountA: accountA, accountB: accountB } })
 		}).then(() => {
 			return contract.accountBalances.call(accountA)
 		}).then(accountBalance =>
